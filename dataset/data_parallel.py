@@ -1,5 +1,6 @@
 r"""数据多线程处理
 """
+import time
 from queue import Queue
 
 from torch.utils.data import DataLoader
@@ -14,6 +15,7 @@ class DataParallel:
         self.data_queue = Queue(10)
         self.task_end = False
         self.data_producer()
+
     @thread(True)
     def data_producer(self):
         """
@@ -24,8 +26,15 @@ class DataParallel:
         self.task_end = True
 
     def data_consumer(self):
+        """
+        数据消费者
+        :return: 迭代数据
+        """
         while 1:
-            if not self.task_end:
+            if not self.data_queue.empty():
                 yield self.data_queue.get()
-            else:
+            elif self.task_end:
                 break
+            else:
+                # 休息10ms
+                time.sleep(0.01)
